@@ -1,6 +1,22 @@
 import os
 import time
-from colorama import init
+try:
+    from colorama import init
+except:
+    y = input('Some modules aren\'t installed. Do you want to install it? [Y/N] ')
+    if y.lower() == 'y':
+        print('\nInstalling colorama...')
+        os.system('pip install colorama &> dev/null/')
+        from colorama import init
+        i = 3
+        while i > 0:
+            os.system('clear')
+            print('Modules was installed!\n' + str(i) + '...')
+            time.sleep(1)
+            i -= 1
+    else:
+        os.system('clear')
+        exit
 init()
 from colorama import Fore, Back, Style
 print(Fore.WHITE)
@@ -14,6 +30,12 @@ except FileNotFoundError:
 servers = flist.readline().split(' ')
 flist.close()
 
+try:
+    tlist = open('testlist.txt')
+    tservers = tlist.readline().split(' ')
+except:
+    tservers = ['google.com']
+
 if servers == ['']:
     print('Enter the adresses of the monitored servers, separating them with a space:')
     rawservers = input()
@@ -24,6 +46,13 @@ if servers == ['']:
         flist.write(rawservers)
         flist.close()
 
+os.system('clear')
+y = input('Do you want to ping testing server(s)? [Y/N] ')
+if y == 'y':
+    testing = True
+else:
+    testing = False
+
 response = 0
 sent = 0
 ok = 0
@@ -33,6 +62,26 @@ try:
     while True:
         try:
             os.system('clear')
+            if testing:
+                for taddr in tservers:
+                    starttime = time.time()
+                    response = os.system('ping -c 1' + taddr + ' &> /dev/null/')
+                    timedelta = time.time() - starttime
+                    if response == 0:
+                        print(Fore.WHITE + taddr + ': ' + Fore.GREEN + 'OK')
+                    else:
+                        print(Fore.WHITE + taddr + ': ' + Fore.RED + 'lost' + Fore.WHITE + ' (code ' + str(response) + ')')
+                    if timedelta >= 0.50:
+                        pingfore = Fore.RED
+                    elif timedelta >= 0.20:
+                        pingfore = Fore.YELLOW
+                    else:
+                        pingfore = Fore.RED
+                    if response == 0:
+                        print(pingfore + '(Ping: ' + str(int(timedelta * 100000) / 100) + ' msec)')
+                    else:
+                        print(Fore.RED + '(Ping: infinity)\n')
+
             for addr in servers:
                 starttime = time.time()
                 response = os.system('ping -c 1 ' + addr + ' &> /dev/null')
@@ -50,9 +99,11 @@ try:
                     pingfore = Fore.YELLOW
                 else:
                     pingfore = Fore.GREEN
-                print(pingfore + '(Ping: ' + str(int(timedelta * 100000) / 100) + ' msec)')
-                print()
-            print(Fore.WHITE + '=== STATISTICS ===')
+                if response == 0:
+                    print(pingfore + '(Ping: ' + str(int(timedelta * 100000) / 100) + ' msec)\n')
+                else:
+                    print(Fore.RED + '(Ping: infinity)\n')
+            print(Fore.WHITE + '\n=== STATISTICS ===')
             print('    Total packets sent: ' + str(sent))
             print('        "OK" responses: ' + str(ok))
             print('        Lost responces: ' + str(lost))
